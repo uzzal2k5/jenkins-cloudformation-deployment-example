@@ -1,14 +1,18 @@
 pipeline {
-  agent {
-    kubernetes {
-    // This is a YAML representation of the Pod, to allow setting any values not supported as fields.
-      yamlFile 'k8s/k8sPodTemplate.yaml' // Declarative agents can be defined from YAML.
-    }
-  }
+  agent any
 
   parameters {
+    choice(
+        name: 'PARAMETERS',
+        choices: [
+            'example-stack-parameters.properties',
+            'example-stack-parameters-v1.0.properties',
+            'example-stack-parameters-v2.0.properties'
+            ],
+        description: 'Parameters Configuration Version'
+      )
     string(name: 'STACK_NAME', defaultValue: 'example-stack', description: 'Enter the CloudFormation Stack Name.')
-    string(name: 'PARAMETERS_FILE_NAME', defaultValue: 'example-stack-parameters.properties', description: 'Enter the Parameters File Name (Must contain file extension type *.properties)')
+    string(name: 'PARAMETERS_FILE_NAME', defaultValue: '${params.PARAMETERS}', description: 'Enter the Parameters File Name (Must contain file extension type *.properties)')
     string(name: 'TEMPLATE_NAME', defaultValue: 'S3-Bucket.yaml', description: 'Enter the CloudFormation Template Name (Must contain file extension type *.yaml)')
     credentials(name: 'CFN_CREDENTIALS_ID', defaultValue: '', description: 'AWS Account Role.', required: true)
     choice(
@@ -29,17 +33,6 @@ pipeline {
   }
 
   stages {
-
-    stage('check version') {
-      steps {
-        ansiColor('xterm') {
-          container("jenkins-agent") {
-            sh 'aws --version'
-            sh 'aws sts get-caller-identity'
-          }
-        }
-      }
-    }
 
     stage('action') {
       when {
